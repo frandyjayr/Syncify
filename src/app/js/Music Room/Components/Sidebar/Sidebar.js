@@ -1,9 +1,9 @@
 import React from 'react';
-import Button from 'react-bootstrap/Button';
-import classes from './Sidebar.css';
+import './Sidebar.css';
 
 const Sidebar = (props) => (
-    <div className="Sidebar-container">
+    <div className="sidebar_sidenav">
+        <a href="home">Home</a>        
         <input type="search"></input>
     </div>
 );
