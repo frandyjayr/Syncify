@@ -6,12 +6,7 @@ import { connect } from 'react-redux'
 
 import { BrowserRouter as Router, Switch, Route, Redirect, withRouter } from 'react-router-dom';
 import { SpotifyApiContext } from 'react-spotify-api';
-//const path = require('path');
 
-
-
-console.log(process.env.REACT_APP_CLIENT_ID);
-console.log(__dirname)
 const PrivateRoute = ({ component: Component, ...rest }) => (
 
   <Route {...rest} render={(props) => (

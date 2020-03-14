@@ -4,11 +4,9 @@ var request = require('request');
 
 export const authEndpoint = 'https://accounts.spotify.com/authorize?';
 
-const clientId = "e1a6860ed0054748985a5975339d8878";
-const clientSecret =  "57c5a84e03024d17929d06e74103bfb8";
-const redirectUri = "http://localhost:3001/syncify/logon/authenticate";
-
-console.log(process.env);
+const clientId = process.env.REACT_APP_CLIENT_ID;
+const clientSecret =  process.env.REACT_APP_CLIENT_SECRET;
+const redirectUri = process.env.REACT_APP_REDIRECT_URI;
 
 const scopes = [
   "user-read-currently-playing",
