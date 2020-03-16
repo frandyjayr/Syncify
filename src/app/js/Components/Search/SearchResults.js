@@ -1,18 +1,20 @@
 import React from 'react'
 import ArtistView from '../ContentView/ArtistView/ArtistView.js';
 import TrackView from '../ContentView/TrackView/TrackView.js';
+import Wrapper from '../../Utility/Wrapper/Wrapper.js';
+import { SearchTrackConfig } from '../../Configuration/TrackViewConfig.js';
+import '../../Utility/Wrapper/Wrapper.css';
 
 const SearchResults = (props) => {
+    let config = SearchTrackConfig();
+    
     return (
         <div>
             <h1>Song Results</h1>
-            {props.data.tracks.items.map((track) => (
-                
-                <div key={track.id}>
-                    {track.album.images.length > 0 ? <img src={track.album.images[track.album.images.length - 1].url} alt=''></img> : null }
-                    <div style={{color: 'white'}}>{track.name}</div>
-                    <div style={{color: 'white'}}>{track.album.name}</div>
-                </div>
+            {props.data.tracks.items.map((track) => (                
+                <Wrapper key={track.id} className='tracksearchwrapper'>
+                    <TrackView track={track} config={config}></TrackView>
+                </Wrapper>
             ))}
             <h1>Album Results</h1>
             {props.data.albums.items.map((album) => (
@@ -46,9 +48,3 @@ const SearchResults = (props) => {
 };
 
 export default SearchResults;
-
-// {props.data.playlist.items.map((album) => ())}
-
-// playlist.images.length - 1
-// playlist.name
-// playlist.owner.display_name

@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
-import MusicRoomLayout from './Components/MusicRoomLayout/MusicRoomLayout.js';
+import Wrapper from './Utility/Wrapper/Wrapper.js';
 import MusicRoom from './Containers/MusicRoom/MusicRoom.js';
 import Logon from './Containers/Logon/Logon.js';
 import { connect } from 'react-redux'
-
 import { BrowserRouter as Router, Switch, Route, Redirect, withRouter } from 'react-router-dom';
 import { SpotifyApiContext } from 'react-spotify-api';
 
@@ -12,8 +11,10 @@ const PrivateRoute = ({ component: Component, ...rest }) => (
   <Route {...rest} render={(props) => (
     //  (rest.location.state !== undefined && rest.location.state.isLoggedIn === true)
       (rest.isLoggedIn && rest.isAuthenticated)
-      ? <Component {...props}> <SpotifyApiContext.Provider value={rest.accessToken}><MusicRoom accessToken={rest.accessToken}></MusicRoom></SpotifyApiContext.Provider> </Component>
-      : <Redirect to={{ pathname: '/syncify/logon', state: { from: props.location } }}/>
+      ? (<Component {...props}> <SpotifyApiContext.Provider value={rest.accessToken}>
+        <MusicRoom accessToken={rest.accessToken}></MusicRoom>     
+      </SpotifyApiContext.Provider> </Component>)
+      : (<Redirect to={{ pathname: '/syncify/logon', state: { from: props.location } }}/>)
   )} />
 )
 
@@ -33,7 +34,7 @@ class App extends Component {
             <Route path='/syncify/logon' component={Logon}></Route>         
             <PrivateRoute 
               path='/' 
-              component={MusicRoomLayout} 
+              component={Wrapper} 
               isLoggedIn={this.props.isLoggedIn} 
               isAuthenticated={this.props.isAuthenticated} 
               accessToken={this.props.accessToken}>              

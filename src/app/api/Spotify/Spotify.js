@@ -9,8 +9,14 @@ const clientSecret =  process.env.REACT_APP_CLIENT_SECRET;
 const redirectUri = process.env.REACT_APP_REDIRECT_URI;
 
 const scopes = [
-  "user-read-currently-playing",
+  "streaming",
+  "user-read-email",
+  "user-read-private",
   "user-read-playback-state",
+  "user-modify-playback-state",
+  "user-library-read",
+  "user-library-modify",
+
 ];
 
 export function RetrieveAccessToken(token, callback) {

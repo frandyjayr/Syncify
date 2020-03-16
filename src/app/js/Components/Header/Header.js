@@ -1,8 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
-
 import './Header.css';
 import logo from '../../../Public/Resources/Images/logo.png';
+import * as actionTypes from '../../Store/Actions/ActionTypes.js';
 
 const Header = (props) => {
     return (
@@ -20,7 +20,7 @@ const Header = (props) => {
 const mapDispatchToProps = (dispatch) => {
     return {
       logoutUser: () => dispatch({ 
-        type: 'LOGOUT_USER'
+        type: actionTypes.LOGOUT_USER
       })
     }
   }

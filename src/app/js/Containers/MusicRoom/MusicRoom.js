@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import Sidebar from '../Sidebar/Sidebar.js';
 import Header from '../../Components/Header/Header.js';
-import MusicPlayer from '../MusicPlayer/MusicPlayer.js';
 import { SpotifyApiContext } from 'react-spotify-api';
 import { withRouter } from 'react-router-dom';
+import SpotifyMusicPlayer from '../SpotifyMusicPlayer/SpotifyMusicPlayer.js';
 
 class MusicRoom extends Component {
     constructor(props) {
@@ -19,12 +19,10 @@ class MusicRoom extends Component {
     render () {
         return (
             <SpotifyApiContext.Provider value={this.props.accessToken}>
-                <Header></Header>
-
-                
+                <Header></Header>                
                 <Sidebar></Sidebar>
                 <div>ChatRoom</div>
-                <MusicPlayer></MusicPlayer>
+                <SpotifyMusicPlayer></SpotifyMusicPlayer>
                 
            
             </SpotifyApiContext.Provider>

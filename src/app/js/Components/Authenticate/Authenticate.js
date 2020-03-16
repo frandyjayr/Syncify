@@ -13,29 +13,11 @@ const Authenticate = (props) => {
     } else {
         return (
             <div>
-            <div>Authentication Success...</div>
-            
+            <div>Authentication Success...</div>           
             <Redirect  to='/'></Redirect>
         </div>)
         
     }
-
-    // return (        
-    //     <div>
-    //         {!props.isAuthenticated ?(
-    //             <div>
-    //                 <div>Logging In...</div>
-    //             </div>
-    //         ) : (
-    //             <div>
-    //                 <div>Authentication Success...</div>
-                    
-    //                 <Redirect exact to={'/'}></Redirect>
-    //             </div>)
-    //         }   
-    //     </div>
-    // );
-
 };
 
 const mapStateToProps = (state) => {

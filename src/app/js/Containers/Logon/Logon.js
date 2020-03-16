@@ -4,6 +4,7 @@ import { Switch, Route, Redirect, withRouter } from 'react-router-dom';
 import Authenticate from '../../Components/Authenticate/Authenticate.js';
 import LogonPage from '../../Components/LogonPage/LogonPage.js';
 import { connect } from 'react-redux';
+import * as actionTypes from '../../Store/Actions/ActionTypes.js';
 
 class Logon extends Component {
   constructor(props) {
@@ -84,14 +85,14 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
   return {
     setAuthentication: (authStatus, tokenParams, user) => dispatch({ 
-      type: 'SET_AUTHENTICATION', 
+      type: actionTypes.SET_AUTHENTICATION, 
       payload : { 
         authStatus: authStatus, 
         tokenParams: {...tokenParams},
         user: {...user}
       }
     }),
-    setUserLogin: (loginStatus) => dispatch({ type: 'SET_LOGIN', payload : { status: loginStatus}})
+    setUserLogin: (loginStatus) => dispatch({ type: actionTypes.SET_LOGIN, payload : { status: loginStatus}})
   }
 }
 

@@ -1,0 +1,8 @@
+.trackview_container {
+    display: flex;
+}
+
+.trackview_album:hover {
+    background-color: black;
+    opacity: 0.5;
+}

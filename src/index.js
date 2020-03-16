@@ -6,14 +6,15 @@ import * as serviceWorker from './app/js/serviceWorker';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import storeAndPersistor from './app/js/Store/configureStore.js';
+import storeAndPersistor from './app/js/Store/Config/configureStore.js';
 import { BrowserRouter as Router } from 'react-router-dom';
-
+import ScriptTag from 'react-script-tag';
 
 ReactDOM.render(
     <Provider store={storeAndPersistor().store}>
         <PersistGate loading={null} persistor={storeAndPersistor().persistor}>
             <Router>
+                <ScriptTag isHydrating={true} type="text/javascript" src="https://sdk.scdn.co/spotify-player.js" />
                 <App />
             </Router>
         </PersistGate>
