@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import Wrapper from '../../Utility/Wrapper/Wrapper.js'
 import TrackView from '../ContentView/TrackView/TrackView.js';
-import { CurrentTrackConfig } from '../../Configuration/TrackViewConfig.js';
+import { CurrentTrackConfig } from '../../Utility/Configuration/TrackViewConfig.js';
 import './MusicPlayerFooter.css';
 
 const MusicPlayerFooter = (props) => { 

@@ -2,7 +2,7 @@ import React from 'react'
 import ArtistView from '../ContentView/ArtistView/ArtistView.js';
 import TrackView from '../ContentView/TrackView/TrackView.js';
 import Wrapper from '../../Utility/Wrapper/Wrapper.js';
-import { SearchTrackConfig } from '../../Configuration/TrackViewConfig.js';
+import { SearchTrackConfig } from '../../Utility/Configuration/TrackViewConfig.js';
 import '../../Utility/Wrapper/Wrapper.css';
 
 const SearchResults = (props) => {
@@ -11,12 +11,14 @@ const SearchResults = (props) => {
     return (
         <div>
             <h1>Song Results</h1>
-            {props.data.tracks.items.map((track) => (                
-                <Wrapper key={track.id} className='tracksearchwrapper'>
+            {props.data.tracks.items.map((track, index) => (                
+                <Wrapper key={track.id + 'songResults' + index} className='tracksearchwrapper'>
                     <TrackView track={track} config={config}></TrackView>
                 </Wrapper>
             ))}
-            <h1>Album Results</h1>
+
+            
+            {/* <h1>Album Results</h1>
             {props.data.albums.items.map((album) => (
                 
                 <div key={album.id}>
@@ -42,7 +44,7 @@ const SearchResults = (props) => {
                     <div style={{color: 'white'}}>{playlist.name}</div>
                     <div style={{color: 'white'}}>{playlist.owner.display_name}</div>
                 </div>
-            ))}
+            ))} */}
         </div>
     )
 };

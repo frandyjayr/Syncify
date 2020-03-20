@@ -22,11 +22,26 @@ io.on('connection', function(socket) {
         }
         roomManager.addUserToRoom(payload.userId, payload.roomId);
         let currentSong = queueManager.getCurrentSong(payload.roomId);
+        let queue = queueManager.getQueue(payload.roomId);
         socket.join(payload.roomId);
         if (currentSong) {            
-            console.log('join room current song: ', currentSong);
-            io.to(socket.id).emit('updateNewUser', currentSong);
+            payload = {
+                currentSong: currentSong,
+            }
+            console.log(payload);
+            io.to(socket.id).emit('updateNewUser', payload.currentSong);
+            
         }
+
+        if (queue && queue.length > 0) {
+            payload = {
+                queue: queue ? queue : []
+            }
+
+            io.to(socket.id).emit('updateNewUserQueue', payload.queue);
+        }
+
+
 
     });
 
@@ -34,14 +49,20 @@ io.on('connection', function(socket) {
     socket.on('addToQueue', function(payload) {   
         let roomId = roomManager.getCurrentRoom(payload.userInfo.userId);
         queueManager.addItem(roomId, payload.trackInfo);
-        io.to(roomId).emit('addToQueue', queueManager.getQueue(roomId));
+        io.to(roomId).emit('updateQueue', queueManager.getQueue(roomId));
     });
+
+    socket.on('removeFromQueue', function(payload) {
+        let roomId = roomManager.getCurrentRoom(payload.userInfo.userId);
+        queueManager.removeItem(roomId, payload.trackInfo.queuePosition);
+        io.to(roomId).emit('updateQueue', queueManager.getQueue(roomId));
+    })
 
     socket.on('playClick', function(payload) {
         let roomId = roomManager.getCurrentRoom(payload.userInfo.userId);
         let currentSong = queueManager.getCurrentSong(roomId);
-
-        if (currentSong) {
+        console.log('playclick payload: ', payload);
+        if (currentSong && payload.trackInfo.paused) {
             let newPayload = {
                 trackInfo: {
                     uri: currentSong.uri,
@@ -52,6 +73,9 @@ io.on('connection', function(socket) {
                   }
             }
             io.to(roomId).emit('playClick', newPayload);
+        } else if (currentSong && !payload.trackInfo.paused) {
+            // update the song status here
+            io.to(roomId).emit('pauseClick');
         } else {
             playNext(io, payload, roomId, 'playClick');
         }
@@ -99,8 +123,8 @@ function playCurrentSong(io, payload, roomId, type) {
             uri: currentSong.uri,
             name: currentSong.name,  
             startTimestamp: Date.now()            
-          }
+        }
     }
-    console.log('newpayload ', newPayload);
     io.to(roomId).emit(type, newPayload);
+    io.to(roomId).emit('updateQueue', queueManager.getQueue(roomId));
 }

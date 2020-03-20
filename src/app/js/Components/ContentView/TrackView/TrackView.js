@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import './TrackView.css';
-import * as actionTypes from '../../../Store/Actions/ActionTypes.js';
+import SocketContext from '../../../Utility/Context/SocketContext.js';
 
 const TrackView = (props) => {
     return (
@@ -23,20 +23,53 @@ const TrackView = (props) => {
                 <div style={{color: 'white'}}>{props.track.album.name}</div>
             </div>
 
+            {props.config.canQueue ? <div onClick={() => addToQueue(props.socket, props.track, props.userId)}><button>+</button></div> : <div></div>}
+            {props.config.canRemoveQueue ? <div onClick={() => removeFromQueue(props.socket, props.track.queuePosition, props.userId)}><button>-</button></div>: <div></div>}
         </div>
     )
 }
 
-const mapStateToProps = (state) => {
-    return {
-      currentSong: state.currentSong
+const addToQueue = (socket, track, user) => {
+    const payload = {
+        trackInfo: {
+            trackId: track.id,
+            name: track.name,
+            albumName: track.album.name,
+            albumSrc: track.album.images.length > 0 ? track.album.images[track.album.images.length - 1].url : null,
+            uri: track.uri
+        },
+        userInfo: {
+            userId: user
+        }
+
     }
-  };
-  
-const mapDispatchToProps = (dispatch) => {
-    return {
-        changeSong: (songInfo) => dispatch({ type: actionTypes.CHANGE_SONG, payload : { songInfo: songInfo}})
-    }
+    socket.emit('addToQueue', payload);
 }
 
-export default connect(mapStateToProps,mapDispatchToProps)(TrackView)
+const removeFromQueue = (socket, queuePosition, user) => {
+    const payload = {
+        trackInfo: {
+            queuePosition: queuePosition
+        },
+        userInfo: {
+            userId: user
+        }
+
+    }
+    socket.emit('removeFromQueue', payload);
+}
+
+const mapStateToProps = (state) => {
+    return {
+      currentSong: state.currentSong,
+      userId: state.user.id
+    }
+};
+
+const TrackViewWithSocket = (props) => (
+    <SocketContext.Consumer>
+      {socket => <TrackView {...props} socket={socket}></TrackView>}
+    </SocketContext.Consumer>
+)
+
+export default connect(mapStateToProps)(TrackViewWithSocket)

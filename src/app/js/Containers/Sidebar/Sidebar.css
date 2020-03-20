@@ -1,14 +1,13 @@
 .sidebar_container {
-    min-width: 35%;
-    max-width: 35%;
-    height: 100%;
-    position: fixed; /* Fixed Sidebar (stay in place on scroll) */
-    z-index: 1; /* Stay on top */
-    /* top: 0; */
-    left: 0;
-    background-color: #333; /* Black */
-    overflow-x: hidden; /* Disable horizontal scroll */
-    padding-top: 20px;
+    /* min-width: 290px;
+    max-width: 290px;
+    z-index: 1; 
+    background-color: #333; 
+    overflow-x: hidden; 
+    padding-top: 20px; */
+    background-color: #333;
+    width: 350px;
+    overflow-x: hidden; 
 }
 
 .sidebar_sidenav a {

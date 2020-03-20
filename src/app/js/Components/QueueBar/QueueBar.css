@@ -1,0 +1,11 @@
+.queuebar_container {
+    /* min-width: 350px;
+    max-width: 350px;
+    z-index: 1; 
+    background-color: red; 
+    overflow-x: hidden; 
+    padding-top: 20px; */
+    background-color: grey;
+    width: 300px;
+    overflow-x: hidden; 
+}

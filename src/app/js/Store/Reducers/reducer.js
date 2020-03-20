@@ -6,18 +6,11 @@ const initialState = {
     isPlaying: false,
     player: null,
     tokenParams: {},
-    user: {},
-    currentSong: {}
+    user: {}
 }
 
 const reducer = (state = initialState, action) => {
     switch (action.type) {
-        case actionTypes.CHANGE_SONG: {
-            return {
-                ...state,
-                currentSong: {...action.payload.songInfo}
-            }
-        }
         case actionTypes.LOGOUT_USER: {
             return {
                 ...state,
@@ -46,7 +39,7 @@ const reducer = (state = initialState, action) => {
                 ...state,
                 player: {...action.payload.player}
             }
-        }       
+        }  
         default: {
             return state
         }
