@@ -29,7 +29,6 @@ class QueueManager {
     }
 
     hasPrevSong(roomId) {
-        console.log('hasprevroom: ', this.playedStack[roomId])
         return !this.playedStack[roomId] ? false : this.playedStack[roomId].size();
     }
 
@@ -51,7 +50,6 @@ class QueueManager {
         let prevSong = this.playedStack[roomId].peek();
         
         if (prevSong) {
-            console.log(prevSong);
             this.queue[roomId].unshift(this.currentSong[roomId]);
             this.currentSong[roomId] = this.playedStack[roomId].pop();
         }

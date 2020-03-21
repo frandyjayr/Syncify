@@ -8,7 +8,7 @@ import './MusicPlayerFooter.css';
 const MusicPlayerFooter = (props) => { 
     return (
         <div className='musicplayerview_container'>
-            {props.currentSong.valid ? <Wrapper><TrackView config={CurrentTrackConfig()}></TrackView></Wrapper> : null }
+            {/* <Wrapper><TrackView config={CurrentTrackConfig()}></TrackView></Wrapper> */}
             <div>TrackController</div>
             <div>volume control</div>
             <button onClick={() => props.prevClick()}>PREV</button>

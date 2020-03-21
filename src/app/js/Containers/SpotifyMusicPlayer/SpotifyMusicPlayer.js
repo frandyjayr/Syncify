@@ -245,11 +245,11 @@ class SpotifyMusicPlayer extends Component {
         let positionStamp = this.milisToMinutesAndSeconds(state.position);
         let durationStamp = this.milisToMinutesAndSeconds(state.duration);
 
-        let payload = {
+        let payload = { 
           trackInfo: {
             uri: state.context.uri,
-            positionStamp: positionStamp,
-            durationStamp: durationStamp,
+            positionTimestamp: state.position,
+            durationTimestamp: state.duration,
             positionSliderValue: val,
             paused: state.paused
           },
@@ -282,14 +282,13 @@ class SpotifyMusicPlayer extends Component {
 
   syncPlayClick = (payload) => {
 
-    let position_ms = payload.trackInfo.positionStamp ? this.timeStringToMilis(payload.trackInfo.positionStamp) : 0;
-
+    console.log(payload.trackInfo)
     this.player.getCurrentState().then((state) => {
       if (state.context.uri !== payload.trackInfo.uri) {
         this.changeSong({
           playerInstance: this.player,
           spotify_uri: payload.trackInfo.uri,
-          position_ms: position_ms
+          position_ms: payload.trackInfo.positionTimestamp ? payload.trackInfo.positionTimestamp : 0
         });
       }  
     })
@@ -312,18 +311,22 @@ class SpotifyMusicPlayer extends Component {
   }
 
   updatePlayer = (payload) => {
+    if (payload) {
+      let currentTime = Date.now();
+      let startTime = new Date(payload.startTimestamp);
+      let position_ms = currentTime - startTime + 200;
 
-    let currentTime = Date.now();
-    let startTime = new Date(payload.startTimestamp);
-    let seconds_ms = Math.floor((currentTime - startTime));
+      this.changeSong({
+        playerInstance: this.player,
+        spotify_uri: payload.uri,
+        position_ms: position_ms,
+      });
+    } else {
+      this.pausePlayer({
+        playInstance: this.player
+      })
+    }
 
-    //let position_ms = payload.trackInfo.positionStamp ? this.timeStringToMilis(payload.trackInfo.positionStamp) : 0;
-
-    this.changeSong({
-      playerInstance: this.player,
-      spotify_uri: payload.uri,
-      position_ms: seconds_ms,
-    });
   }
 
   pausePlayer = () => {
