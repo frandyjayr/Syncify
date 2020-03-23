@@ -4,32 +4,39 @@ import './TrackView.css';
 import SocketContext from '../../../Utility/Context/SocketContext.js';
 
 const TrackView = (props) => {
-    return (
-        <div className='trackview_container'>
-            {props.config.isPlayable ? (
-                <div className='trackview_album' onClick={() => props.changeSong()}>
+    if (props.track) {
+        return (
+            <div className='trackview_container'>
+                {props.config.isPlayable ? (
+                    <div className='trackview_album' onClick={() => props.changeSong()}>
+                        {props.track.album.images.length > 0 ? 
+                        <img style={{width: 'auto', height: props.config.height + props.config.heightUnit}} src={props.track.album.images[props.track.album.images.length - 1].url} alt=''></img> : null }
+                    </div>
+                ) : (
+                    <div>
                     {props.track.album.images.length > 0 ? 
                     <img style={{width: 'auto', height: props.config.height + props.config.heightUnit}} src={props.track.album.images[props.track.album.images.length - 1].url} alt=''></img> : null }
                 </div>
-            ) : (
+                )}
+    
                 <div>
-                {props.track.album.images.length > 0 ? 
-                <img style={{width: 'auto', height: props.config.height + props.config.heightUnit}} src={props.track.album.images[props.track.album.images.length - 1].url} alt=''></img> : null }
+                    <div style={{color: 'white'}}>{props.track.name}</div>
+                    <div style={{color: 'white'}}>{props.track.album.name}</div>
+                </div>
+    
+                {props.config.canQueue ? <div onClick={() => addToQueue(props.musicRoomSocket, props.track, props.userId)}><button>+</button></div> : <div></div>}
+                {props.config.canRemoveQueue ? <div onClick={() => removeFromQueue(props.musicRoomSocket, props.track.queuePosition, props.userId)}><button>-</button></div>: <div></div>}
             </div>
-            )}
+        )
+    } else {
+        return (
+            <div className='trackview_container'></div>
+        )
+    }
 
-            <div>
-                <div style={{color: 'white'}}>{props.track.name}</div>
-                <div style={{color: 'white'}}>{props.track.album.name}</div>
-            </div>
-
-            {props.config.canQueue ? <div onClick={() => addToQueue(props.socket, props.track, props.userId)}><button>+</button></div> : <div></div>}
-            {props.config.canRemoveQueue ? <div onClick={() => removeFromQueue(props.socket, props.track.queuePosition, props.userId)}><button>-</button></div>: <div></div>}
-        </div>
-    )
 }
 
-const addToQueue = (socket, track, user) => {
+const addToQueue = (musicRoomSocket, track, user) => {
     const payload = {
         trackInfo: {
             trackId: track.id,
@@ -43,10 +50,10 @@ const addToQueue = (socket, track, user) => {
         }
 
     }
-    socket.emit('addToQueue', payload);
+    musicRoomSocket.emit('addToQueue', payload);
 }
 
-const removeFromQueue = (socket, queuePosition, user) => {
+const removeFromQueue = (musicRoomSocket, queuePosition, user) => {
     const payload = {
         trackInfo: {
             queuePosition: queuePosition
@@ -56,7 +63,7 @@ const removeFromQueue = (socket, queuePosition, user) => {
         }
 
     }
-    socket.emit('removeFromQueue', payload);
+    musicRoomSocket.emit('removeFromQueue', payload);
 }
 
 const mapStateToProps = (state) => {
@@ -68,7 +75,7 @@ const mapStateToProps = (state) => {
 
 const TrackViewWithSocket = (props) => (
     <SocketContext.Consumer>
-      {socket => <TrackView {...props} socket={socket}></TrackView>}
+      {sockets => <TrackView {...props} musicRoomSocket={sockets.musicRoomSocket}></TrackView>}
     </SocketContext.Consumer>
 )
 

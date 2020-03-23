@@ -1,0 +1,5 @@
+.spotifymusicplayer_container {
+    background-color: rgb(151, 147, 147); 
+    overflow-x: hidden;
+    min-height: 130px;
+}

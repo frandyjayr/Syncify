@@ -7,6 +7,10 @@ class QueueManager {
         this.currentSong = {};
     }
 
+    getCurrentSong(roomId) {
+        return this.currentSong[roomId] === undefined ? null : this.currentSong[roomId]
+    }
+
     getQueue(roomId) {
         return this.queue[roomId] === undefined ? null : this.queue[roomId];
     }
@@ -22,10 +26,6 @@ class QueueManager {
         if (this.queue[roomId] && queuePosition < this.queue[roomId].length) {
             this.queue[roomId].splice(queuePosition, 1);
         }
-    }
-
-    getCurrentSong(roomId) {
-        return this.currentSong[roomId] === undefined ? null : this.currentSong[roomId]
     }
 
     hasPrevSong(roomId) {
@@ -62,6 +62,10 @@ class QueueManager {
 
     setSongStartTime(roomId, startTime = Date.now()) {
         this.currentSong[roomId]['startTimestamp'] = startTime;
+    }
+
+    setCurrentSongPosition(roomId, positionTimestamp) {
+        this.currentSong[roomId]['positionTimestamp'] = positionTimestamp;
     }
 }
 

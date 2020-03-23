@@ -4,7 +4,7 @@ const initialState = {
     isLoggedIn: false,
     isAuthenticated: false,
     isPlaying: false,
-    player: null,
+    currentRoom: null,
     tokenParams: {},
     user: {}
 }
@@ -34,12 +34,6 @@ const reducer = (state = initialState, action) => {
                 isLoggedIn: action.payload.status
             }
         }       
-        case actionTypes.SET_PLAYER: {
-            return {
-                ...state,
-                player: {...action.payload.player}
-            }
-        }  
         default: {
             return state
         }

@@ -7,7 +7,6 @@ import './QueueBar.css';
 
 const QueueBar = (props) => {
     let config = QueueTrackConfig();
-    console.log('config: ', config);
 
     return(
         <div className='queuebar_container'>

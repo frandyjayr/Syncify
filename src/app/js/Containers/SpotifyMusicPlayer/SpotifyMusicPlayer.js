@@ -1,20 +1,29 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import MusicPlayerFooter from '../../Components/MusicPlayerFooter/MusicPlayerFooter';
-import axios from 'axios';
-import * as actionTypes from '../../Store/Actions/ActionTypes';
 import SocketContext from '../../Utility/Context/SocketContext.js';
+import { CurrentTrackConfig } from '../../Utility/Configuration/TrackViewConfig.js';
+import Wrapper from '../../Utility/Wrapper/Wrapper.js'
+import TrackView from '../../Components/ContentView/TrackView/TrackView.js';
+import TrackController from '../../Components/TrackController/TrackController.js'
+import {changeSong, transferPlaybackHere } from '../../../api/Spotify/Spotify.js';
+import './SpotifyMusicPlayer.css';
 
 class SpotifyMusicPlayer extends Component {
   constructor(props) {
       super(props);
       this.state = {
           deviceId: null,
-          playingInfo: null,
           playerInitError: false,
-          playing: false,
-          positionSliderValue: 50,
-          volumeSliderValue: 50
+          positionSliderValue: 0,
+          volumeSliderValue: 50,
+          isSeeking: false,
+          track: {
+            name: '',
+            album: {
+              name: '',
+              images: []
+            }
+          }
       }
       this.playerCheckInterval = null;
       this.player = null;
@@ -34,14 +43,16 @@ class SpotifyMusicPlayer extends Component {
   
       this.player.on('player_state_changed', state => {
         if (state) {
-          //logger.log('player state changed', state);
+          console.log('player_state_changed');
           let { duration, position } = state;
-          // duration = 100%
-          // position = ?%
+          if (position >= duration) {
+            // todo (need to add in the condition that this should only be executed if you are the host of the room)
+            // if not, all of the people in ther room might emit a message to the socket and it could cause
+            // undefined behavior like pressing next multiple times
+            this.nextClick();
+          }
           let val = (position * 100) / duration;
           this.setState({
-            playingInfo: state,
-            playing: !state.paused,
             positionSliderValue: val
           });
   
@@ -56,27 +67,13 @@ class SpotifyMusicPlayer extends Component {
           if (this.props.isPlaying && state.paused) {
             clearInterval(this.positionCheckInterval);
           }
-  
-          if (this.props.isPlaying === state.paused) {
-              //add back in jayr was testing
-            //this.props.setIsPlaying(!state.paused);
-          }
-  
-          if (
-            !this.props.currentlyPlaying ||
-            this.props.currentlyPlaying !== state.track_window.current_track.name
-          ) {
-            let { current_track } = state.track_window;
-            // add back in jayr was causing error for now wanted to test functionality
-            //this.props.setCurrentlyPlaying(current_track.name);
-          }
         }
       });
   
       this.player.on('ready', data => {
         let { device_id } = data;
         this.setState({ deviceId: device_id }, () => {
-          this.transferPlaybackHere();
+          transferPlaybackHere(this.state, this.props.accessToken, this.CheckChangePosition);
         });
         this.player.getVolume().then(vol => {
           let volume = vol * 100;
@@ -101,104 +98,14 @@ class SpotifyMusicPlayer extends Component {
             console.log("success");
         }
     }
-
   }
-
-
-  changeSong = ({
-    position_ms,
-    spotify_uri,
-    playerInstance: {
-      _options: {
-        getOAuthToken,
-        id
-      }
-    }
-  }) => {
-    getOAuthToken(access_token => {
-      fetch(`https://api.spotify.com/v1/me/player/play?device_id=${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ uris: [spotify_uri], position_ms: position_ms }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`
-        }
-      });
-    });
-  };
-
-  pauseSong = ({
-    playerInstance: {
-      _options: {
-        getOAuthToken,
-        id
-      }
-    }
-  }) => {
-    getOAuthToken(access_token => {
-      fetch(`	https://api.spotify.com/v1/me/player/pause?device_id=${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${access_token}`
-        },
-      });
-    });
-  };
-
-  transferPlaybackHere = () => {
-    // ONLY FOR PREMIUM USERS - transfer the playback automatically to the web app.
-    // for normal users they have to go in the spotify app/website and change the device manually
-    // user type is stored in redux state => this.props.user.type
-    const { deviceId } = this.state;
-    fetch('https://api.spotify.com/v1/me/player', {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${this.props.accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        device_ids: [deviceId],
-        play: false
-      })
-    })
-      .then(res => {
-        //logger.log('status', res.status);
-        if (res.status === 204) {
-          axios
-            .get('https://api.spotify.com/v1/me/player', {
-              headers: {
-                Authorization: `Bearer ${this.props.accessToken}`
-              }
-            })
-            .then(() => {
-              // Transferred playback successfully, get current timestamp
-              this.CheckChangePosition();
-            })
-            .catch(err => {
-              //logger.log(err);
-            });
-        }
-      })
-      .catch(e => console.error(e));
-
-    // logger.log('Hello', this.props);
-    // if (this.props.user.product === 'premium') {
-    // } else {
-    //   logger.log(
-    //     'Cannot transfer playback automatically because you are not a premium user.'
-    //   );
-    // }
-  };
 
   checkChangePosition = () => {
     this.player.getCurrentState().then( (state) => {
       if (state) {
         let { duration, position } = state;
-        // duration = 100%
-        // position = ?%
         let val = (position * 100) / duration;
-        if (val !== this.state.positionSliderValue) {
+        if (val !== this.state.positionSliderValue && !this.state.isSeeking) {
           this.setState({
             positionSliderValue: val
           });
@@ -206,11 +113,15 @@ class SpotifyMusicPlayer extends Component {
 
         let positionStamp = this.milisToMinutesAndSeconds(state.position);
         let durationStamp = this.milisToMinutesAndSeconds(state.duration);
+
+        if (state.position >= state.duration) {
+          this.nextClick();
+        }
+
         this.setState({ positionStamp, durationStamp });
       }
     });
   };
-
 
   milisToMinutesAndSeconds = (mil) => {
     let minutes = Math.floor(mil / 60000);
@@ -218,32 +129,13 @@ class SpotifyMusicPlayer extends Component {
     return minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
   };
 
-  timeStringToMilis = (timeString) => {
-    let a = timeString.split(':'); 
-    return ((+a[0]) + (+a[1])) * 1000; 
-  }
-  
   playClick = () => {
     // todo make if else branch to emit either 'playClick' or 'playPause' 
     // depending on the current play state of the player.
-
-
     this.player.getCurrentState().then( (state) => {
       if (state) {
         let { duration, position } = state;
-        // duration = 100%
-        // position = ?%
         let val = (position * 100) / duration;
-
-        //todo see if this needs to be passsed to the payload below
-        // if (val !== this.state.positionSliderValue) {
-        //   this.setState({
-        //     positionSliderValue: val
-        //   });
-        // }
-
-        let positionStamp = this.milisToMinutesAndSeconds(state.position);
-        let durationStamp = this.milisToMinutesAndSeconds(state.duration);
 
         let payload = { 
           trackInfo: {
@@ -252,110 +144,168 @@ class SpotifyMusicPlayer extends Component {
             durationTimestamp: state.duration,
             positionSliderValue: val,
             paused: state.paused
-          },
-          userInfo: {
-            userId: this.props.userId
           }
         }
-        this.props.socket.emit('playClick', payload)
+        this.props.musicRoomSocket.emit('playClick', payload)
       }
     });
   };
 
   prevClick = () => {        
-    let payload = {
-      userInfo: {
-        userId: this.props.userId
-      }
-    }
-    this.props.socket.emit('prevClick', payload)
+    this.props.musicRoomSocket.emit('prevClick')
   };
   
   nextClick = () => {
-    let payload = {
-      userInfo: {
-        userId: this.props.userId
-      }
-    }
-    this.props.socket.emit('nextClick', payload)
+    this.props.musicRoomSocket.emit('nextClick')
   };
 
-  syncPlayClick = (payload) => {
+  syncPlayClick = (payload) => { 
+    let trackInfo = {
+      name: payload.trackInfo.name,
+      album: {
+        name: payload.trackInfo.albumName,
+        images: [{url:payload.trackInfo.albumSrc}]
+      }
+    }
 
-    console.log(payload.trackInfo)
     this.player.getCurrentState().then((state) => {
       if (state.context.uri !== payload.trackInfo.uri) {
-        this.changeSong({
+        changeSong({
           playerInstance: this.player,
           spotify_uri: payload.trackInfo.uri,
-          position_ms: payload.trackInfo.positionTimestamp ? payload.trackInfo.positionTimestamp : 0
-        });
+          position_ms: payload.trackInfo.positionTimestamp ? payload.trackInfo.positionTimestamp : 0},
+          () => this.changeSongState(trackInfo));
       }  
     })
   }
 
   syncPrevClick = (payload) => {
-    this.changeSong({
+    let trackInfo = {
+      name: payload.trackInfo.name,
+      album: {
+        name: payload.trackInfo.albumName,
+        images: [{url:payload.trackInfo.albumSrc}]
+      }
+  }
+
+    changeSong({
       playerInstance: this.player,
       spotify_uri: payload.trackInfo.uri,
-      position_ms: 0
-    });
+      position_ms: 0},
+      () => this.changeSongState(trackInfo));
   }
 
   syncNextClick = (payload) => {
-    this.changeSong({
+    let trackInfo = {
+      name: payload.trackInfo.name,
+      album: {
+        name: payload.trackInfo.albumName,
+        images: [{url:payload.trackInfo.albumSrc}]
+      }
+    }
+
+    changeSong({
       playerInstance: this.player,
       spotify_uri: payload.trackInfo.uri,
-      position_ms: 0
-    });
+      position_ms: 0},
+      () => this.changeSongState(trackInfo));
   }
 
   updatePlayer = (payload) => {
-    if (payload) {
+    if (payload && payload.trackInfo) {
       let currentTime = Date.now();
-      let startTime = new Date(payload.startTimestamp);
-      let position_ms = currentTime - startTime + 200;
+      let startTime = new Date(payload.trackInfo.startTimestamp);
+      let position_ms = currentTime - startTime;
+      let trackInfo = {
+        name: payload.trackInfo.name,
+        album: {
+          name: payload.trackInfo.albumName,
+          images: [{url:payload.trackInfo.albumSrc}]
+        }
+      }
 
-      this.changeSong({
+      changeSong({
         playerInstance: this.player,
-        spotify_uri: payload.uri,
-        position_ms: position_ms,
-      });
+        spotify_uri: payload.trackInfo.uri,
+        position_ms: position_ms},
+        () => this.changeSongState(trackInfo)
+      );
+
     } else {
+      this.changeSongState(null);
       this.pausePlayer({
         playInstance: this.player
       })
     }
-
   }
 
   pausePlayer = () => {
-    this.pauseSong({
-      playerInstance: this.player
+    this.player.pause();
+  }
+
+  changeSongState = (trackInfo) => {
+    this.setState({
+      track: trackInfo,
+      isSeeking: false
+    })
+  }
+
+  handleUISeekChange = (event, newPosition) => {
+    this.setState({
+      positionSliderValue: newPosition,
+      isSeeking: true
+    })
+  }
+
+  handleSeekChange = (event, newPosition) => {
+    this.setSliderPosition(newPosition);
+  }
+
+  handleVolumeChange = (event, newVolume) => {
+    this.setState({volumeSliderValue: newVolume});
+    this.player.setVolume(newVolume / 100);
+  }
+  
+  setSliderPosition(newPosition) {
+    this.player.getCurrentState().then((state) => {
+      let payload = {
+        trackInfo: {
+          uri: state.track_window.current_track.uri,
+          name: state.track_window.current_track.name,
+          positionTimestamp: ((newPosition) / 100) * state.duration,
+          albumName: state.track_window.current_track.album.name,
+          albumSrc: state.track_window.current_track.album.images.length > 0 ? state.track_window.current_track.album.images[state.track_window.current_track.album.images.length - 1].url : null
+        }
+      }      
+      this.props.musicRoomSocket.emit('seekTrack', payload)
     })
   }
 
   componentDidMount = () => {
       this.playerCheckInterval = setInterval(() => this.checkForPlayer(), 1000);
-      if (this.props.socket) {
-        this.props.socket.on('playClick', (payload) => { this.syncPlayClick(payload); })
-        this.props.socket.on('prevClick', (payload) => { this.syncPrevClick(payload) })
-        this.props.socket.on('nextClick', (payload) => { this.syncNextClick(payload) })
-        this.props.socket.on('pauseClick', (payload) => {this.pausePlayer(payload) })
-        this.props.socket.on('updateNewUser', (payload) => { this.updatePlayer(payload) })
-        
+      if (this.props.musicRoomSocket) {
+        this.props.musicRoomSocket.on('playClick', (payload) => { this.syncPlayClick(payload); })
+        this.props.musicRoomSocket.on('prevClick', (payload) => { this.syncPrevClick(payload) })
+        this.props.musicRoomSocket.on('nextClick', (payload) => { this.syncNextClick(payload) })
+        this.props.musicRoomSocket.on('pauseClick', (payload) => {this.pausePlayer(payload) })
+        this.props.musicRoomSocket.on('updateNewUser', (payload) => { this.updatePlayer(payload) })       
       }
-
   }
 
   render() {
       return (
-          <div>
-              <MusicPlayerFooter 
-                playClick={this.playClick}
-                prevClick={this.prevClick}
-                nextClick={this.nextClick}>  
-              </MusicPlayerFooter>                
+          <div className='spotifymusicplayer_container'>
+            <Wrapper><TrackView track={this.state.track} config={CurrentTrackConfig()}></TrackView></Wrapper>
+            <TrackController 
+              positionSliderValue={this.state.positionSliderValue}
+              volumeSliderValue={this.state.volumeSliderValue}
+              handleSeekChange={this.handleSeekChange}
+              handleVolumeChange={this.handleVolumeChange}
+              handleUISeekChange={this.handleUISeekChange}
+              playClick={this.playClick}
+              prevClick={this.prevClick}
+              nextClick={this.nextClick}
+            track={this.state.track}></TrackController>       
           </div>
       )
   }
@@ -366,22 +316,14 @@ const mapStateToProps = (state) => {
       accessToken: state.tokenParams.access_token,
       isLoggedIn: state.isLoggedIn,
       isAuthenticated: state.isAuthenticated,
-      isPlaying: state.isPlaying,
-      userId: state.user.id
+      isPlaying: state.isPlaying
     }
 };
 
-const mapDispatchToProps = (dispatch) => {
-    return {
-        setPlayer: (player) => dispatch({ type: actionTypes.SET_PLAYER, payload : { player: player}})
-    }
-}
-
-
 const SpotifyMusicPlayerWithSocket = (props) => (
   <SocketContext.Consumer>
-    {socket => <SpotifyMusicPlayer {...props} socket={socket}></SpotifyMusicPlayer>}
+    {sockets => <SpotifyMusicPlayer {...props} musicRoomSocket={sockets.musicRoomSocket}></SpotifyMusicPlayer>}
   </SocketContext.Consumer>
 )
 
-export default connect(mapStateToProps,mapDispatchToProps)(SpotifyMusicPlayerWithSocket);
+export default connect(mapStateToProps)(SpotifyMusicPlayerWithSocket);

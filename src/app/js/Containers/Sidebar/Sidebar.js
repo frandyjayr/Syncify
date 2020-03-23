@@ -38,15 +38,15 @@ class Sidebar extends Component {
 
   render() {
     return(
-      <div className='sidebar_container'>  
+      <div className='sidebar_container'> 
         <Search searchChange={this.handleSearchChange}></Search>
-        {this.state.searchConfig.query.length > 0 ? (
-        <SpotifySearch {...this.state.searchConfig} children={(searchResult, loading, error) => {
-          return searchResult ?
-            <SearchResults data={searchResult}></SearchResults> : <div>Search for a song</div>}}>
-        </SpotifySearch> ) : 
-        <div>START SEARCHING</div>
-        }
+          {this.state.searchConfig.query.length > 0 ? (
+          <SpotifySearch {...this.state.searchConfig} children={(searchResult, loading, error) => {
+            return searchResult ?
+              <SearchResults data={searchResult}></SearchResults> : <div>Search for a song</div>}}>
+          </SpotifySearch> ) : 
+          <div>START SEARCHING</div>
+          }
       </div>
     )
   }   

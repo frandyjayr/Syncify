@@ -11,7 +11,10 @@ app.get('/', function(req, res){
   res.send('<h1>Hello world</h1>');
 });
 
-io.on('connection', function(socket) {
+const musicRoomIO = io.of('/music-room');
+const chatRoomIO = io.of('/chat-room');
+
+musicRoomIO.on('connection', function(socket) {
     console.log('a user connected');
 
     socket.on('joinRoom', function(payload) {
@@ -22,7 +25,7 @@ io.on('connection', function(socket) {
         if (currentRoom) {
             socket.leave(currentRoom);
             roomManager.removeUserFromRoom(socket.id);
-          }
+        }
 
         // Add user to the new room
         roomManager.addUserToRoom(socket.id, payload.roomId);
@@ -34,9 +37,9 @@ io.on('connection', function(socket) {
 
         // If you are the first person to enter a room and a song was paused
         if (numberInRoom === 1 && currentSong) {
-            playCurrentSong(io, null, payload.roomId, 'playClick')
+            playCurrentSong(musicRoomIO, payload.roomId, 'playClick')
         } else {
-            io.to(socket.id).emit('updateNewUser',  currentSong); 
+            musicRoomIO.to(socket.id).emit('updateNewUser',  {trackInfo: currentSong} ); 
         }
         
         // If there is a queue with at least 1 song, send the updated queue to user
@@ -44,23 +47,25 @@ io.on('connection', function(socket) {
             payload = {
                 queue: queue ? queue : []
             }
-
-            io.to(socket.id).emit('updateNewUserQueue', payload.queue);
+            musicRoomIO.to(socket.id).emit('updateNewUserQueue', payload.queue);
+        } else {
+            musicRoomIO.to(socket.id).emit('updateNewUserQueue', []);
         }
 
     });
 
 
     socket.on('addToQueue', function(payload) {   
+        console.log(payload);
         let roomId = roomManager.getCurrentRoom(socket.id);
         queueManager.addItem(roomId, payload.trackInfo);
-        io.to(roomId).emit('updateQueue', queueManager.getQueue(roomId));
+        musicRoomIO.to(roomId).emit('updateQueue', queueManager.getQueue(roomId));
     });
 
     socket.on('removeFromQueue', function(payload) {
         let roomId = roomManager.getCurrentRoom(socket.id);
         queueManager.removeItem(roomId, payload.trackInfo.queuePosition);
-        io.to(roomId).emit('updateQueue', queueManager.getQueue(roomId));
+        musicRoomIO.to(roomId).emit('updateQueue', queueManager.getQueue(roomId));
     })
 
     socket.on('playClick', function(payload) {
@@ -74,32 +79,48 @@ io.on('connection', function(socket) {
                     positionTimestamp: payload.trackInfo.positionTimestamp,
                     durationTimestamp: payload.trackInfo.durationTimestamp,
                     positionSliderValue: payload.trackInfo.positionSliderValue,
-                    paused: payload.trackInfo.paused
+                    paused: payload.trackInfo.paused,
+                    albumSrc: currentSong.albumSrc,
+                    albumName: currentSong.albumName, 
+                    name: currentSong.name
                   }
             }
             console.log('playclick', newPayload);
-            io.to(roomId).emit('playClick', newPayload);
+            musicRoomIO.to(roomId).emit('playClick', newPayload);
         } else if (currentSong && !payload.trackInfo.paused) {
-            io.to(roomId).emit('pauseClick');
+            musicRoomIO.to(roomId).emit('pauseClick');
         } else {
-            playNext(io, payload, roomId, 'playClick');
+            playNext(musicRoomIO, roomId, 'playClick');
         }
         
     })
 
-    socket.on('nextClick', function(payload) {
+    socket.on('nextClick', function() {
         let roomId = roomManager.getCurrentRoom(socket.id);
-        playNext(io, payload, roomId, 'nextClick');
+        playNext(musicRoomIO, roomId, 'nextClick');
     })
 
-    socket.on('prevClick', function(payload) {
+    socket.on('prevClick', function() {
         let roomId = roomManager.getCurrentRoom(socket.id);
 
         if (queueManager.hasPrevSong(roomId)) {
             queueManager.setPrevSong(roomId);
-            playCurrentSong(io, payload, roomId, 'prevClick');
+            playCurrentSong(musicRoomIO, roomId, 'prevClick');
         }
     })
+
+    socket.on('seekTrack', function(payload) {
+        console.log('seekTrack: ', payload)
+
+        let roomId = roomManager.getCurrentRoom(socket.id);
+        let currentSong = queueManager.getCurrentSong(roomId);
+
+        if (currentSong) {
+            // try calling a seek track versus calling a play new song
+            queueManager.setCurrentSongPosition(roomId, payload.trackInfo.positionTimestamp);
+            playCurrentSong(musicRoomIO, roomId, 'playClick');
+        }
+    });
 
     socket.on('disconnect', function() {
         roomManager.removeUserFromRoom(socket.id);
@@ -108,17 +129,18 @@ io.on('connection', function(socket) {
 });
 
 server.listen(4000, function(){
-  console.log('listening on *:4000');
+    console.log('listening on *:4000');
 });
 
-function playNext(io, payload, roomId, type) {
+
+function playNext(musicRoomIO, roomId, type) {
     if (queueManager.getQueue(roomId) && queueManager.getQueue(roomId).length > 0) {
         queueManager.setNextSong(roomId);
-        playCurrentSong(io, payload, roomId, type);
+        playCurrentSong(musicRoomIO, roomId, type);
     }
 }
 
-function playCurrentSong(io, payload, roomId, type) {
+function playCurrentSong(musicRoomIO, roomId, type) {
     let currentSong = queueManager.getCurrentSong(roomId);
     if (!currentSong) return;
 
@@ -130,9 +152,11 @@ function playCurrentSong(io, payload, roomId, type) {
             uri: currentSong.uri,
             name: currentSong.name,  
             startTimestamp: Date.now(),
-            positionTimestamp: currentSong.positionTimestamp           
+            positionTimestamp: currentSong.positionTimestamp,
+            albumSrc: currentSong.albumSrc,
+            albumName: currentSong.albumName   
         }
     }
-    io.to(roomId).emit(type, newPayload);
-    io.to(roomId).emit('updateQueue', queueManager.getQueue(roomId));
+    musicRoomIO.to(roomId).emit(type, newPayload);
+    musicRoomIO.to(roomId).emit('updateQueue', queueManager.getQueue(roomId));
 }

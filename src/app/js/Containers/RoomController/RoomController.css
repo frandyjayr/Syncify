@@ -1,12 +1,4 @@
-.roommanager_container {
-    min-width: 18%;
-    max-width: 18%;
-    height: 100%;
-    position: fixed; /* Fixed Sidebar (stay in place on scroll) */
-    z-index: 1; /* Stay on top */
-    /* top: 0; */
-    right: 0;
+.roomcontroller_container {
     background-color: #333; /* Black */
-    overflow-x: hidden; /* Disable horizontal scroll */
-    padding-top: 20px;
+    height: 100%;
 }

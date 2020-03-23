@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Wrapper from '../../Utility/Wrapper/Wrapper.js';
+import '../../Utility/Wrapper/Wrapper.css';
 import './RoomController.css';
 import socketIOClient from 'socket.io-client';
 import SocketContext from '../../Utility/Context/SocketContext.js';
@@ -11,7 +12,6 @@ class RoomController extends Component {
         this.state = {
 
         }
-        //this.socket = socketIOClient('localhost:4000');
     }
 
     joinRoom = (roomId) => {
@@ -19,12 +19,12 @@ class RoomController extends Component {
             roomId: roomId,
             userId: this.props.userId
         }
-        this.props.socket.emit('joinRoom', userInfo);
+        this.props.musicRoomSocket.emit('joinRoom', userInfo);
     }
 
     render() {
         return(
-            <Wrapper className="roommanager_container">
+            <Wrapper className="roomcontroller_wrapper">
                 <div>
                     <div><button>create Room</button></div>
                 </div>
@@ -47,7 +47,7 @@ const mapStateToProps = (state) => {
 
 const RoomControllerWithSocket = (props) => (
     <SocketContext.Consumer>
-      {socket => <RoomController {...props} socket={socket}></RoomController>}
+      {sockets => <RoomController {...props} musicRoomSocket={sockets.musicRoomSocket}></RoomController>}
     </SocketContext.Consumer>
   )
 

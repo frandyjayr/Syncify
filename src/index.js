@@ -15,7 +15,7 @@ ReactDOM.render(
         <PersistGate loading={null} persistor={storeAndPersistor().persistor}>
             <Router>
                 <ScriptTag isHydrating={true} type="text/javascript" src="https://sdk.scdn.co/spotify-player.js" />
-                <App />
+                <App/>
             </Router>
         </PersistGate>
     </Provider>,document.getElementById('root'));

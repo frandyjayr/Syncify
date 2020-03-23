@@ -40,7 +40,7 @@ export function RetrieveAccessToken(token, callback) {
     }); 
 }
 
-export var RetrieveUserInfo = (params, callback) => {
+export const RetrieveUserInfo = (params, callback) => {
     if ('access_token' in params) {
     axios
       .get('https://api.spotify.com/v1/me', {
@@ -61,6 +61,85 @@ export var RetrieveUserInfo = (params, callback) => {
 export function ReturnAuthorizeQueryString() {
     return `${authEndpoint}client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes.join("%20")}&response_type=code&show_dialog=true`;
 }
+
+export const changeSong = ({
+  position_ms,
+  spotify_uri,
+  playerInstance: {
+    _options: {
+      getOAuthToken,
+      id
+    }
+  }}, callback) => {
+  getOAuthToken(access_token => {
+    fetch(`https://api.spotify.com/v1/me/player/play?device_id=${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ uris: [spotify_uri], position_ms: position_ms }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${access_token}`
+      }
+    }).then((function() {
+      callback();
+    }));
+  });
+};
+
+export const pauseSong = ({
+  playerInstance: {
+    _options: {
+      getOAuthToken,
+      id
+    }
+  }
+}) => {
+  getOAuthToken(access_token => {
+    fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${access_token}`
+      },
+    });
+  });
+};
+
+export const transferPlaybackHere = (state, accessToken, CheckChangePositionCallBack) => {
+  // ONLY FOR PREMIUM USERS - transfer the playback automatically to the web app.
+  // for normal users they have to go in the spotify app/website and change the device manually
+  // user type is stored in redux state => this.props.user.type
+  const { deviceId } = state;
+  fetch('https://api.spotify.com/v1/me/player', {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      device_ids: [deviceId],
+      play: false
+    })
+  })
+    .then(res => {
+      //logger.log('status', res.status);
+      if (res.status === 204) {
+        axios
+          .get('https://api.spotify.com/v1/me/player', {
+            headers: {
+              Authorization: `Bearer ${accessToken}`
+            }
+          })
+          .then(() => {
+            // Transferred playback successfully, get current timestamp
+            CheckChangePositionCallBack();
+          })
+          .catch(err => {
+            //logger.log(err);
+          });
+      }
+    })
+    .catch(e => console.error(e));
+};
 
 export function GetUrlVars() {
     var vars = {};

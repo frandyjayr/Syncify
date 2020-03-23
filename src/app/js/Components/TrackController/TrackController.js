@@ -1,11 +1,16 @@
 import React from 'react'
-import SpotifyPlayer from 'react-spotify-web-playback';
 import { connect } from 'react-redux';
-import * as actionTypes from '../../Store/Actions/ActionTypes.js';
+import Slider from '@material-ui/core/Slider'
 
 const TrackController = (props) => {
     return (
-        <SpotifyPlayer token={props.accessToken} uris={['spotify:track:1sOr5OXjbukTzBDgmvd6Fa']}></SpotifyPlayer>
+      <div>
+        <Slider value={props.positionSliderValue} onChange={props.handleUISeekChange} onChangeCommitted={props.handleSeekChange} aria-labelledby="continuous-slider" />
+        <Slider value={props.volumeSliderValue} onChange={props.handleVolumeChange} aria-labelledby="continuous-slider" />
+        <button onClick={() => props.prevClick()}>PREV</button>
+        <button onClick={() => props.playClick()}>PLAY</button>
+        <button onClick={() => props.nextClick()}>NEXT</button>   
+      </div>
     )
 }
 
@@ -17,7 +22,7 @@ const mapStateToProps = (state) => {
   
   const mapDispatchToProps = (dispatch) => {
     return {
-      changeSong: (songInfo) => dispatch({ type: actionTypes.CHANGE_SONG, payload : { songInfo: songInfo}})
+     
     }
   }
 

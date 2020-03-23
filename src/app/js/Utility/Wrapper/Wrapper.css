@@ -5,3 +5,15 @@
 .queuesearchwrapper {
     background-color: gray;
 }
+
+.musicroomwrapper {
+    height: 100vh;
+    max-height: 100vh;
+    display: flex;
+    flex-flow: column;
+}
+
+.roomcontroller_wrapper {
+    background-color: rgb(170, 170, 170); /* Black */
+    height: 100%;
+}
